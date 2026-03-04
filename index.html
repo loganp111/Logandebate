@@ -2,89 +2,122 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PF Debate OS</title>
+    <title>PF-OS | Debate Desktop</title>
     <style>
-        :root { --bg: #2c3e50; --taskbar: #1a252f; --win-bg: #ecf0f1; }
-        body { margin: 0; height: 100vh; background: #34495e; font-family: sans-serif; overflow: hidden; }
+        :root { --taskbar-bg: rgba(20, 20, 20, 0.8); --win-bg: #ffffff; --accent: #0078d4; }
+        body { margin: 0; height: 100vh; background: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80') center/cover; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
         
-        /* Desktop Area */
-        #desktop { width: 100%; height: calc(100% - 40px); position: relative; }
-        
+        /* Desktop Workspace */
+        #desktop { width: 100%; height: calc(100% - 45px); position: relative; }
+
         /* Window Styling */
         .window {
-            position: absolute; width: 600px; background: var(--win-bg);
-            border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            overflow: hidden; display: flex; flex-direction: column;
+            position: absolute; min-width: 300px; background: var(--win-bg);
+            border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: none; flex-direction: column; z-index: 10; border: 1px solid #ccc;
         }
         .title-bar {
-            background: #bdc3c7; padding: 10px; cursor: move;
-            display: flex; justify-content: space-between; font-weight: bold;
+            background: #f3f3f3; padding: 10px; cursor: move;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #ddd; border-top-left-radius: 8px; border-top-right-radius: 8px;
         }
-        .content { padding: 20px; flex-grow: 1; }
-        textarea { width: 100%; height: 300px; border: 1px solid #ccc; padding: 10px; border-radius: 4px; font-family: 'Courier New', monospace; }
+        .win-controls span { cursor: pointer; padding: 0 8px; font-weight: bold; }
+        .content { padding: 15px; flex-grow: 1; overflow-y: auto; }
 
         /* Taskbar */
         #taskbar {
-            position: fixed; bottom: 0; width: 100%; height: 40px;
-            background: var(--taskbar); display: flex; align-items: center; padding: 0 10px;
+            position: fixed; bottom: 0; width: 100%; height: 45px;
+            background: var(--taskbar-bg); backdrop-filter: blur(10px);
+            display: flex; align-items: center; padding: 0 10px; gap: 10px; z-index: 1000;
         }
-        .start-btn { background: #3498db; color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; }
+        .start-btn { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .task-item { color: white; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+
+        /* Timer UI */
+        #timerDisplay { font-size: 40px; text-align: center; font-weight: 700; margin-bottom: 10px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        button.tool { padding: 8px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background: #fff; }
+        button.tool:hover { background: #f0f0f0; }
     </style>
 </head>
 <body>
 
 <div id="desktop">
-    <div class="window" id="caseWindow" style="top: 50px; left: 50px;">
-        <div class="title-bar" id="caseHeader">
-            <span>PF Case Editor v1.0</span>
-            <span style="color: #e74c3c;">●</span>
+    <div class="window" id="caseWin" style="top: 50px; left: 50px; width: 500px;">
+        <div class="title-bar">
+            <span>Case Builder</span>
+            <div class="win-controls"><span onclick="closeWin('caseWin')">✕</span></div>
         </div>
         <div class="content">
-            <label>Contention 1 Tagline:</label><br>
-            <input type="text" style="width: 95%; margin-bottom: 10px;" placeholder="Economy..."><br>
-            <label>Case Body:</label>
-            <textarea placeholder="Paste your cards and warrants here..."></textarea>
-            <button style="margin-top: 10px;" onclick="alert('Case Saved Locally!')">Save Case</button>
+            <input type="text" placeholder="Contention Title..." style="width:100%; margin-bottom:10px; padding:5px;">
+            <textarea style="width:100%; height:200px; padding:5px;" placeholder="Evidence and Warrants..."></textarea>
+        </div>
+    </div>
+
+    <div class="window" id="timerWin" style="top: 100px; left: 600px; width: 300px;">
+        <div class="title-bar">
+            <span>PF Timer</span>
+            <div class="win-controls"><span onclick="closeWin('timerWin')">✕</span></div>
+        </div>
+        <div class="content">
+            <div id="timerDisplay">04:00</div>
+            <div class="btn-grid">
+                <button class="tool" onclick="setTimer(240)">Constructive</button>
+                <button class="tool" onclick="setTimer(180)">Cross-Fire</button>
+                <button class="tool" onclick="setTimer(120)">Summary</button>
+                <button class="tool" onclick="setTimer(120)">Final Focus</button>
+            </div>
+            <hr>
+            <div class="btn-grid">
+                <button class="tool" style="background:#27ae60; color:white;" onclick="startTimer()">Start</button>
+                <button class="tool" style="background:#e74c3c; color:white;" onclick="resetTimer()">Reset</button>
+            </div>
         </div>
     </div>
 </div>
 
 <div id="taskbar">
-    <button class="start-btn">PF-OS</button>
+    <button class="start-btn" onclick="toggleStart()">PF-OS</button>
+    <div class="task-item" onclick="openWin('caseWin')">Case Editor</div>
+    <div class="task-item" onclick="openWin('timerWin')">Speech Timer</div>
 </div>
 
 <script>
-    // Make the window draggable
-    dragElement(document.getElementById("caseWindow"));
-
-    function dragElement(elmnt) {
-      var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-      if (document.getElementById(elmnt.id + "Header")) {
-        document.getElementById(elmnt.id + "Header").onmousedown = dragMouseDown;
-      }
-      function dragMouseDown(e) {
-        e.preventDefault();
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        document.onmouseup = closeDragElement;
-        document.onmousemove = elementDrag;
-      }
-      function elementDrag(e) {
-        e.preventDefault();
-        pos1 = pos3 - e.clientX;
-        pos2 = pos4 - e.clientY;
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-      }
-      function closeDragElement() {
-        document.onmouseup = null;
-        document.onmousemove = null;
-      }
+    function openWin(id) { 
+        const win = document.getElementById(id);
+        win.style.display = 'flex';
+        win.style.zIndex = Math.floor(Date.now() / 1000); // Bring to front
     }
+    function closeWin(id) { document.getElementById(id).style.display = 'none'; }
+
+    // Make windows draggable
+    document.querySelectorAll('.window').forEach(win => {
+        const header = win.querySelector('.title-bar');
+        header.onmousedown = (e) => {
+            let pos1 = 0, pos2 = 0, pos3 = e.clientX, pos4 = e.clientY;
+            document.onmousemove = (e) => {
+                pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
+                pos3 = e.clientX; pos4 = e.clientY;
+                win.style.top = (win.offsetTop - pos2) + "px";
+                win.style.left = (win.offsetLeft - pos1) + "px";
+            };
+            document.onmouseup = () => { document.onmousemove = null; };
+        };
+    });
+
+    // Timer Logic
+    let time = 240, interval;
+    function setTimer(s) { clearInterval(interval); time = s; update(); }
+    function update() {
+        let m = Math.floor(time/60), s = time%60;
+        document.getElementById('timerDisplay').innerText = `${m}:${s<10?'0':''}${s}`;
+    }
+    function startTimer() {
+        clearInterval(interval);
+        interval = setInterval(() => { if(time>0){time--; update();} }, 1000);
+    }
+    function resetTimer() { clearInterval(interval); update(); }
 </script>
 
 </body>
-</html>
+</html
